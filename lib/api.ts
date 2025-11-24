@@ -6,8 +6,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 export interface UploadRequest {
   file: File;
-  // Note: mediaHash is computed in TEE (backend), not in frontend
-  // User signs after backend computes hash and gets TEE attestation
+  // Note: mediaHash is optional - backend computes hash in TEE
+  // If provided, backend will verify it matches TEE hash
+  mediaHash?: string;
   userSignature: string;
   userPublicKey: string;
   userWalletAddress: string;

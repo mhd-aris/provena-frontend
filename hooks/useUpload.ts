@@ -68,8 +68,29 @@ export function useUpload() {
       let userSignature: string;
 
       try {
-        // Try to sign with Privy wallet
-        userSignature = await wallet.signMessage(messageToSign);
+        // Privy ConnectedWallet signing
+        // Convert message to Uint8Array for signing
+        const messageBytes = new TextEncoder().encode(messageToSign);
+        
+        // Use signPersonalMessage method from Privy wallet
+        // Privy ConnectedWallet has signPersonalMessage method
+        if ("signPersonalMessage" in wallet && typeof (wallet as any).signPersonalMessage === "function") {
+          const signatureResult = await (wallet as any).signPersonalMessage(messageBytes);
+          // Signature might be in different formats, convert to hex string
+          if (typeof signatureResult === "string") {
+            userSignature = signatureResult;
+          } else if (signatureResult?.signature) {
+            userSignature = typeof signatureResult.signature === "string" 
+              ? signatureResult.signature 
+              : Buffer.from(signatureResult.signature).toString("hex");
+          } else {
+            userSignature = Buffer.from(signatureResult).toString("hex");
+          }
+        } else {
+          // Fallback: try signMessage method
+          const sig = await (wallet as any).signMessage(messageToSign);
+          userSignature = typeof sig === "string" ? sig : Buffer.from(sig).toString("hex");
+        }
       } catch (signError: any) {
         throw new Error(`Signing failed: ${signError.message}`);
       }
